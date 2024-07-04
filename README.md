@@ -1,4 +1,4 @@
-# ii's Stupid Menu
+# ii's Stupid Template
 ii's Stupid Template is a mod menu template for Gorilla Tag with custom categories and the maximum amount of customization possible. This template is meant for more advanced users, so if you're a new menu creator, this could be difficult for you.
 
 ## Do I need permission to use this?
