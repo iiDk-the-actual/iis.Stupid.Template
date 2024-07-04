@@ -8,7 +8,7 @@ No, this template is free and public for anyone to use. You are welcome to utili
 
 # Installation
 
-- Download the release from [here](https://github.com/iiDk-the-actual/iis.Stupid.Template/releases/latest)
+- Download the source code from [here](https://github.com/iiDk-the-actual/iis.Stupid.Template/releases/latest)
 - Change your `<GamePath>` (Gorilla Tag directory) in `Directory.Build.props` if required
 - Change the menu name in `PluginInfo.cs`
 - Edit the menu visuals in `Menu/Settings.cs`
