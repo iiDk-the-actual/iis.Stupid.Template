@@ -11,4 +11,14 @@ namespace StupidTemplate.Patches
             return !(__instance == GorillaTagger.Instance.offlineVRRig);
         }
     }
+
+    // Thanks nugget for help with patch
+    [HarmonyPatch(typeof(VRRigJobManager), "DeregisterVRRig")]
+    public static class GhostPatch2
+    {
+        public static bool Prefix(VRRigJobManager __instance, VRRig rig)
+        {
+            return !(__instance == GorillaTagger.Instance.offlineVRRig);
+        }
+    }
 }
