@@ -45,6 +45,8 @@ namespace StupidTemplate.Menu
                         }
                         else
                         {
+                            GameObject.Find("Shoulder Camera").transform.Find("CM vcam1").gameObject.SetActive(true);
+
                             Rigidbody comp = menu.AddComponent(typeof(Rigidbody)) as Rigidbody;
                             if (rightHanded)
                             {
@@ -411,6 +413,9 @@ namespace StupidTemplate.Menu
                     TPC = GameObject.Find("Player Objects/Third Person Camera/Shoulder Camera").GetComponent<Camera>();
                 }
                 catch { }
+
+                GameObject.Find("Shoulder Camera").transform.Find("CM vcam1").gameObject.SetActive(false);
+
                 if (TPC != null)
                 {
                     TPC.transform.position = new Vector3(-999f, -999f, -999f);
