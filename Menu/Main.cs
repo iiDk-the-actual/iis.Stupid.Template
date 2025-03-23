@@ -12,7 +12,7 @@ using static StupidTemplate.Settings;
 
 namespace StupidTemplate.Menu
 {
-    [HarmonyPatch(typeof(GorillaLocomotion.Player))]
+    [HarmonyPatch(typeof(GorillaLocomotion.GTPlayer))]
     [HarmonyPatch("LateUpdate", MethodType.Normal)]
     public class Main : MonoBehaviour
     {
@@ -50,11 +50,11 @@ namespace StupidTemplate.Menu
                             Rigidbody comp = menu.AddComponent(typeof(Rigidbody)) as Rigidbody;
                             if (rightHanded)
                             {
-                                comp.velocity = GorillaLocomotion.Player.Instance.rightHandCenterVelocityTracker.GetAverageVelocity(true, 0);
+                                comp.velocity = GorillaLocomotion.GTPlayer.Instance.rightHandCenterVelocityTracker.GetAverageVelocity(true, 0);
                             }
                             else
                             {
-                                comp.velocity = GorillaLocomotion.Player.Instance.leftHandCenterVelocityTracker.GetAverageVelocity(true, 0);
+                                comp.velocity = GorillaLocomotion.GTPlayer.Instance.leftHandCenterVelocityTracker.GetAverageVelocity(true, 0);
                             }
 
                             UnityEngine.Object.Destroy(menu, 2);
