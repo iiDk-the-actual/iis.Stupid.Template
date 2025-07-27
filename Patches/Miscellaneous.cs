@@ -32,7 +32,7 @@ namespace StupidTemplate.Patches
         }
     }
 
-    [HarmonyPatch(typeof(GorillaNot), "CheckReports", MethodType.Enumerator)]
+    [HarmonyPatch(typeof(GorillaNot), "CheckReports")]
     public class NoCheckReports : MonoBehaviour
     {
         private static bool Prefix()
