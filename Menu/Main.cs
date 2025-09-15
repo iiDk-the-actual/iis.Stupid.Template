@@ -1,19 +1,36 @@
 ﻿using BepInEx;
+using GorillaLocomotion;
 using HarmonyLib;
 using StupidTemplate.Classes;
 using StupidTemplate.Notifications;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 using static StupidTemplate.Menu.Buttons;
 using static StupidTemplate.Settings;
 
+/*
+ * Hello, current and future developers!
+ * This is ii's Stupid Template, a base mod menu template for Gorilla Tag.
+ * 
+ * Comments are placed around the code showing you how certain classes work, such as the settings, buttons, and notifications.
+ * 
+ * If you need help with the template, you may join my Discord server: https://discord.gg/iidk
+ * It's full of talented developers that can show you the way and how things work.
+ * 
+ * If you want to support my, check out my Patreon: https://patreon.com/iiDk
+ * Any support is appreciated, and it helps me make more free content for you all!
+ * 
+ * Thank you, and enjoy the template!
+ */
+
 namespace StupidTemplate.Menu
 {
-    [HarmonyPatch(typeof(GorillaLocomotion.GTPlayer))]
-    [HarmonyPatch("LateUpdate", MethodType.Normal)]
+    [HarmonyPatch(typeof(GTPlayer), "LateUpdate")]
     public class Main : MonoBehaviour
     {
         // Constant
@@ -32,42 +49,31 @@ namespace StupidTemplate.Menu
                             CreateMenu();
                             RecenterMenu(rightHanded, keyboardOpen);
                             if (reference == null)
-                            {
                                 CreateReference(rightHanded);
-                            }
                         }
                     }
                     else
                     {
-                        if ((toOpen || keyboardOpen))
-                        {
+                        if (toOpen || keyboardOpen)
                             RecenterMenu(rightHanded, keyboardOpen);
-                        }
                         else
                         {
                             GameObject.Find("Shoulder Camera").transform.Find("CM vcam1").gameObject.SetActive(true);
 
                             Rigidbody comp = menu.AddComponent(typeof(Rigidbody)) as Rigidbody;
-                            if (rightHanded)
-                            {
-                                comp.velocity = GorillaLocomotion.GTPlayer.Instance.rightHandCenterVelocityTracker.GetAverageVelocity(true, 0);
-                            }
-                            else
-                            {
-                                comp.velocity = GorillaLocomotion.GTPlayer.Instance.leftHandCenterVelocityTracker.GetAverageVelocity(true, 0);
-                            }
+                            comp.linearVelocity = (rightHanded ? GTPlayer.Instance.rightHandCenterVelocityTracker : GTPlayer.Instance.leftHandCenterVelocityTracker).GetAverageVelocity(true, 0);
 
-                            UnityEngine.Object.Destroy(menu, 2);
+                            Destroy(menu, 2f);
                             menu = null;
 
-                            UnityEngine.Object.Destroy(reference);
+                            Destroy(reference);
                             reference = null;
                         }
                     }
                 }
                 catch (Exception exc)
                 {
-                    UnityEngine.Debug.LogError(string.Format("{0} // Error initializing at {1}: {2}", PluginInfo.Name, exc.StackTrace, exc.Message));
+                    Debug.LogError(string.Format("{0} // Error initializing at {1}: {2}", PluginInfo.Name, exc.StackTrace, exc.Message));
                 }
 
             // Constant
@@ -75,34 +81,25 @@ namespace StupidTemplate.Menu
                 {
                     // Pre-Execution
                         if (fpsObject != null)
-                        {
                             fpsObject.text = "FPS: " + Mathf.Ceil(1f / Time.unscaledDeltaTime).ToString();
-                        }
 
-                    // Execute Enabled mods
-                        foreach (ButtonInfo[] buttonlist in buttons)
+                    // Execute Enabled Mods
+                        foreach (ButtonInfo button in buttons
+                            .SelectMany(list => list)
+                            .Where(button => button.enabled && button.method != null))
                         {
-                            foreach (ButtonInfo v in buttonlist)
+                            try
                             {
-                                if (v.enabled)
-                                {
-                                    if (v.method != null)
-                                    {
-                                        try
-                                        {
-                                            v.method.Invoke();
-                                        }
-                                        catch (Exception exc)
-                                        {
-                                            UnityEngine.Debug.LogError(string.Format("{0} // Error with mod {1} at {2}: {3}", PluginInfo.Name, v.buttonText, exc.StackTrace, exc.Message));
-                                        }
-                                    }
-                                }
+                                button.method.Invoke();
+                            }
+                            catch (Exception exc)
+                            {
+                                Debug.LogError(string.Format("{0} // Error with mod {1} at {2}: {3}", PluginInfo.Name, button.buttonText, exc.StackTrace, exc.Message));
                             }
                         }
                 } catch (Exception exc)
                 {
-                    UnityEngine.Debug.LogError(string.Format("{0} // Error with executing mods at {1}: {2}", PluginInfo.Name, exc.StackTrace, exc.Message));
+                    Debug.LogError(string.Format("{0} // Error with executing mods at {1}: {2}", PluginInfo.Name, exc.StackTrace, exc.Message));
                 }
         }
 
@@ -111,15 +108,15 @@ namespace StupidTemplate.Menu
         {
             // Menu Holder
                 menu = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                UnityEngine.Object.Destroy(menu.GetComponent<Rigidbody>());
-                UnityEngine.Object.Destroy(menu.GetComponent<BoxCollider>());
-                UnityEngine.Object.Destroy(menu.GetComponent<Renderer>());
+                Destroy(menu.GetComponent<Rigidbody>());
+                Destroy(menu.GetComponent<BoxCollider>());
+                Destroy(menu.GetComponent<Renderer>());
                 menu.transform.localScale = new Vector3(0.1f, 0.3f, 0.3825f);
 
             // Menu Background
                 menuBackground = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                UnityEngine.Object.Destroy(menuBackground.GetComponent<Rigidbody>());
-                UnityEngine.Object.Destroy(menuBackground.GetComponent<BoxCollider>());
+                Destroy(menuBackground.GetComponent<Rigidbody>());
+                Destroy(menuBackground.GetComponent<BoxCollider>());
                 menuBackground.transform.parent = menu.transform;
                 menuBackground.transform.rotation = Quaternion.identity;
                 menuBackground.transform.localScale = menuSize;
@@ -127,8 +124,7 @@ namespace StupidTemplate.Menu
                 menuBackground.transform.position = new Vector3(0.05f, 0f, 0f);
 
                 ColorChanger colorChanger = menuBackground.AddComponent<ColorChanger>();
-                colorChanger.colorInfo = backgroundColor;
-                colorChanger.Start();
+                colorChanger.colors = backgroundColor;
 
             // Canvas
                 canvasObject = new GameObject();
@@ -167,9 +163,9 @@ namespace StupidTemplate.Menu
                     fpsObject = new GameObject
                     {
                         transform =
-                    {
-                        parent = canvasObject.transform
-                    }
+                        {
+                            parent = canvasObject.transform
+                        }
                     }.AddComponent<Text>();
                     fpsObject.font = currentFont;
                     fpsObject.text = "FPS: " + Mathf.Ceil(1f / Time.unscaledDeltaTime).ToString();
@@ -178,7 +174,7 @@ namespace StupidTemplate.Menu
                     fpsObject.supportRichText = true;
                     fpsObject.fontStyle = FontStyle.Italic;
                     fpsObject.alignment = TextAnchor.MiddleCenter;
-                    fpsObject.horizontalOverflow = UnityEngine.HorizontalWrapMode.Overflow;
+                    fpsObject.horizontalOverflow = HorizontalWrapMode.Overflow;
                     fpsObject.resizeTextForBestFit = true;
                     fpsObject.resizeTextMinSize = 0;
                     RectTransform component2 = fpsObject.GetComponent<RectTransform>();
@@ -194,10 +190,8 @@ namespace StupidTemplate.Menu
                     {
                         GameObject disconnectbutton = GameObject.CreatePrimitive(PrimitiveType.Cube);
                         if (!UnityInput.Current.GetKey(KeyCode.Q))
-                        {
                             disconnectbutton.layer = 2;
-                        }
-                        UnityEngine.Object.Destroy(disconnectbutton.GetComponent<Rigidbody>());
+                        Destroy(disconnectbutton.GetComponent<Rigidbody>());
                         disconnectbutton.GetComponent<BoxCollider>().isTrigger = true;
                         disconnectbutton.transform.parent = menu.transform;
                         disconnectbutton.transform.rotation = Quaternion.identity;
@@ -207,8 +201,7 @@ namespace StupidTemplate.Menu
                         disconnectbutton.AddComponent<Classes.Button>().relatedText = "Disconnect";
 
                         colorChanger = disconnectbutton.AddComponent<ColorChanger>();
-                        colorChanger.colorInfo = buttonColors[0];
-                        colorChanger.Start();
+                        colorChanger.colors = buttonColors[0];
 
                         Text discontext = new GameObject
                         {
@@ -235,10 +228,8 @@ namespace StupidTemplate.Menu
                 // Page Buttons
                     GameObject gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     if (!UnityInput.Current.GetKey(KeyCode.Q))
-                    {
                         gameObject.layer = 2;
-                    }
-                    UnityEngine.Object.Destroy(gameObject.GetComponent<Rigidbody>());
+                    Destroy(gameObject.GetComponent<Rigidbody>());
                     gameObject.GetComponent<BoxCollider>().isTrigger = true;
                     gameObject.transform.parent = menu.transform;
                     gameObject.transform.rotation = Quaternion.identity;
@@ -248,8 +239,7 @@ namespace StupidTemplate.Menu
                     gameObject.AddComponent<Classes.Button>().relatedText = "PreviousPage";
 
                     colorChanger = gameObject.AddComponent<ColorChanger>();
-                    colorChanger.colorInfo = buttonColors[0];
-                    colorChanger.Start();
+                    colorChanger.colors = buttonColors[0];
 
                     text = new GameObject
                     {
@@ -276,7 +266,7 @@ namespace StupidTemplate.Menu
                     {
                         gameObject.layer = 2;
                     }
-                    UnityEngine.Object.Destroy(gameObject.GetComponent<Rigidbody>());
+                    Destroy(gameObject.GetComponent<Rigidbody>());
                     gameObject.GetComponent<BoxCollider>().isTrigger = true;
                     gameObject.transform.parent = menu.transform;
                     gameObject.transform.rotation = Quaternion.identity;
@@ -286,8 +276,7 @@ namespace StupidTemplate.Menu
                     gameObject.AddComponent<Classes.Button>().relatedText = "NextPage";
 
                     colorChanger = gameObject.AddComponent<ColorChanger>();
-                    colorChanger.colorInfo = buttonColors[0];
-                    colorChanger.Start();
+                    colorChanger.colors = buttonColors[0];
 
                     text = new GameObject
                     {
@@ -310,21 +299,18 @@ namespace StupidTemplate.Menu
                     component.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
 
                 // Mod Buttons
-                    ButtonInfo[] activeButtons = buttons[buttonsType].Skip(pageNumber * buttonsPerPage).Take(buttonsPerPage).ToArray();
+                    ButtonInfo[] activeButtons = buttons[currentCategory].Skip(pageNumber * buttonsPerPage).Take(buttonsPerPage).ToArray();
                     for (int i = 0; i < activeButtons.Length; i++)
-                    {
                         CreateButton(i * 0.1f, activeButtons[i]);
-                    }
         }
 
         public static void CreateButton(float offset, ButtonInfo method)
         {
             GameObject gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             if (!UnityInput.Current.GetKey(KeyCode.Q))
-            {
                 gameObject.layer = 2;
-            }
-            UnityEngine.Object.Destroy(gameObject.GetComponent<Rigidbody>());
+            
+            Destroy(gameObject.GetComponent<Rigidbody>());
             gameObject.GetComponent<BoxCollider>().isTrigger = true;
             gameObject.transform.parent = menu.transform;
             gameObject.transform.rotation = Quaternion.identity;
@@ -333,15 +319,7 @@ namespace StupidTemplate.Menu
             gameObject.AddComponent<Classes.Button>().relatedText = method.buttonText;
 
             ColorChanger colorChanger = gameObject.AddComponent<ColorChanger>();
-            if (method.enabled)
-            {
-                colorChanger.colorInfo = buttonColors[1];
-            }
-            else
-            {
-                colorChanger.colorInfo = buttonColors[0];
-            }
-            colorChanger.Start();
+            colorChanger.colors = method.enabled ? buttonColors[1] : buttonColors[0];
 
             Text text = new GameObject
             {
@@ -352,20 +330,13 @@ namespace StupidTemplate.Menu
             }.AddComponent<Text>();
             text.font = currentFont;
             text.text = method.buttonText;
+
             if (method.overlapText != null)
-            {
                 text.text = method.overlapText;
-            }
+            
             text.supportRichText = true;
             text.fontSize = 1;
-            if (method.enabled)
-            {
-                text.color = textColors[1];
-            }
-            else
-            {
-                text.color = textColors[0];
-            }
+            text.color = method.enabled ? textColors[1] : textColors[0];
             text.alignment = TextAnchor.MiddleCenter;
             text.fontStyle = FontStyle.Italic;
             text.resizeTextForBestFit = true;
@@ -381,7 +352,7 @@ namespace StupidTemplate.Menu
         {
             if (menu != null)
             {
-                UnityEngine.Object.Destroy(menu);
+                Destroy(menu);
                 menu = null;
 
                 CreateMenu();
@@ -423,34 +394,27 @@ namespace StupidTemplate.Menu
                     GameObject bg = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     bg.transform.localScale = new Vector3(10f, 10f, 0.01f);
                     bg.transform.transform.position = TPC.transform.position + TPC.transform.forward;
-                    bg.GetComponent<Renderer>().material.color = new Color32((byte)(backgroundColor.colors[0].color.r * 50), (byte)(backgroundColor.colors[0].color.g * 50), (byte)(backgroundColor.colors[0].color.b * 50), 255);
-                    GameObject.Destroy(bg, Time.deltaTime);
+                    Color realcolor = backgroundColor.GetCurrentColor();
+                    bg.GetComponent<Renderer>().material.color = new Color32((byte)(realcolor.r * 50), (byte)(realcolor.g * 50), (byte)(realcolor.b * 50), 255);
+                    Destroy(bg, 0.05f);
                     menu.transform.parent = TPC.transform;
-                    menu.transform.position = (TPC.transform.position + (Vector3.Scale(TPC.transform.forward, new Vector3(0.5f, 0.5f, 0.5f)))) + (Vector3.Scale(TPC.transform.up, new Vector3(-0.02f, -0.02f, -0.02f)));
-                    Vector3 rot = TPC.transform.rotation.eulerAngles;
-                    rot = new Vector3(rot.x - 90, rot.y + 90, rot.z);
-                    menu.transform.rotation = Quaternion.Euler(rot);
+                    menu.transform.position = TPC.transform.position + (TPC.transform.forward * 0.5f) + (TPC.transform.up * -0.02f);
+                    menu.transform.rotation = TPC.transform.rotation * Quaternion.Euler(-90f, 90f, 0f);
 
                     if (reference != null)
                     {
                         if (Mouse.current.leftButton.isPressed)
                         {
                             Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
-                            RaycastHit hit;
-                            bool worked = Physics.Raycast(ray, out hit, 100);
-                            if (worked)
+                            bool hitButton = Physics.Raycast(ray, out RaycastHit hit, 100);
+                            if (hitButton)
                             {
                                 Classes.Button collide = hit.transform.gameObject.GetComponent<Classes.Button>();
-                                if (collide != null)
-                                {
-                                    collide.OnTriggerEnter(buttonCollider);
-                                }
+                                collide?.OnTriggerEnter(buttonCollider);
                             }
-                        }
+                        } 
                         else
-                        {
                             reference.transform.position = new Vector3(999f, -999f, -999f);
-                        }
                     }
                 }
             }
@@ -459,43 +423,31 @@ namespace StupidTemplate.Menu
         public static void CreateReference(bool isRightHanded)
         {
             reference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            if (isRightHanded)
-            {
-                reference.transform.parent = GorillaTagger.Instance.leftHandTransform;
-            }
-            else
-            {
-                reference.transform.parent = GorillaTagger.Instance.rightHandTransform;
-            }
+            reference.transform.parent = isRightHanded ? GorillaTagger.Instance.leftHandTransform : GorillaTagger.Instance.rightHandTransform;
             reference.GetComponent<Renderer>().material.color = backgroundColor.colors[0].color;
             reference.transform.localPosition = new Vector3(0f, -0.1f, 0f);
             reference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
             buttonCollider = reference.GetComponent<SphereCollider>();
 
             ColorChanger colorChanger = reference.AddComponent<ColorChanger>();
-            colorChanger.colorInfo = backgroundColor;
-            colorChanger.Start();
+            colorChanger.colors = backgroundColor;
         }
 
         public static void Toggle(string buttonText)
         {
-            int lastPage = ((buttons[buttonsType].Length + buttonsPerPage - 1) / buttonsPerPage) - 1;
+            int lastPage = ((buttons[currentCategory].Length + buttonsPerPage - 1) / buttonsPerPage) - 1;
             if (buttonText == "PreviousPage")
             {
                 pageNumber--;
                 if (pageNumber < 0)
-                {
                     pageNumber = lastPage;
-                }
             } else
             {
                 if (buttonText == "NextPage")
                 {
                     pageNumber++;
                     if (pageNumber > lastPage)
-                    {
                         pageNumber = 0;
-                    }
                 } else
                 {
                     ButtonInfo target = GetIndex(buttonText);
@@ -508,62 +460,156 @@ namespace StupidTemplate.Menu
                             {
                                 NotifiLib.SendNotification("<color=grey>[</color><color=green>ENABLE</color><color=grey>]</color> " + target.toolTip);
                                 if (target.enableMethod != null)
-                                {
                                     try { target.enableMethod.Invoke(); } catch { }
-                                }
                             }
                             else
                             {
                                 NotifiLib.SendNotification("<color=grey>[</color><color=red>DISABLE</color><color=grey>]</color> " + target.toolTip);
                                 if (target.disableMethod != null)
-                                {
                                     try { target.disableMethod.Invoke(); } catch { }
-                                }
                             }
                         }
                         else
                         {
                             NotifiLib.SendNotification("<color=grey>[</color><color=green>ENABLE</color><color=grey>]</color> " + target.toolTip);
                             if (target.method != null)
-                            {
                                 try { target.method.Invoke(); } catch { }
-                            }
                         }
                     }
                     else
-                    {
-                        UnityEngine.Debug.LogError(buttonText + " does not exist");
-                    }
+                        Debug.LogError(buttonText + " does not exist");
                 }
             }
             RecreateMenu();
         }
 
-        public static GradientColorKey[] GetSolidGradient(Color color)
-        {
-            return new GradientColorKey[] { new GradientColorKey(color, 0f), new GradientColorKey(color, 1f) };
-        }
-
+        private static readonly Dictionary<string, (int Category, int Index)> cacheGetIndex = new Dictionary<string, (int Category, int Index)>(); // Looping through 800 elements is not a light task :/
         public static ButtonInfo GetIndex(string buttonText)
         {
-            foreach (ButtonInfo[] buttons in Menu.Buttons.buttons)
+            if (buttonText == null)
+                return null;
+
+            if (cacheGetIndex.ContainsKey(buttonText))
             {
+                var CacheData = cacheGetIndex[buttonText];
+                try
+                {
+                    if (buttons[CacheData.Category][CacheData.Index].buttonText == buttonText)
+                        return buttons[CacheData.Category][CacheData.Index];
+                }
+                catch { cacheGetIndex.Remove(buttonText); }
+            }
+
+            int categoryIndex = 0;
+            foreach (ButtonInfo[] buttons in buttons)
+            {
+                int buttonIndex = 0;
                 foreach (ButtonInfo button in buttons)
                 {
                     if (button.buttonText == buttonText)
                     {
+                        try
+                        {
+                            cacheGetIndex.Add(buttonText, (categoryIndex, buttonIndex));
+                        }
+                        catch
+                        {
+                            if (cacheGetIndex.ContainsKey(buttonText))
+                                cacheGetIndex.Remove(buttonText);
+                        }
+
                         return button;
                     }
+                    buttonIndex++;
                 }
+                categoryIndex++;
             }
 
             return null;
         }
 
+        public static Vector3 RandomVector3(float range = 1f) =>
+            new Vector3(UnityEngine.Random.Range(-range, range),
+                        UnityEngine.Random.Range(-range, range),
+                        UnityEngine.Random.Range(-range, range));
+
+        public static Quaternion RandomQuaternion(float range = 360f) =>
+            Quaternion.Euler(UnityEngine.Random.Range(0f, range),
+                        UnityEngine.Random.Range(0f, range),
+                        UnityEngine.Random.Range(0f, range));
+
+        public static Color RandomColor(byte range = 255, byte alpha = 255) =>
+            new Color32((byte)UnityEngine.Random.Range(0, range),
+                        (byte)UnityEngine.Random.Range(0, range),
+                        (byte)UnityEngine.Random.Range(0, range),
+                        alpha);
+
+        public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right) TrueLeftHand()
+        {
+            Quaternion rot = GorillaTagger.Instance.leftHandTransform.rotation * GTPlayer.Instance.leftHandRotOffset;
+            return (GorillaTagger.Instance.leftHandTransform.position + GorillaTagger.Instance.leftHandTransform.rotation * GTPlayer.Instance.leftHandOffset, rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
+        }
+
+        public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right) TrueRightHand()
+        {
+            Quaternion rot = GorillaTagger.Instance.rightHandTransform.rotation * GTPlayer.Instance.rightHandRotOffset;
+            return (GorillaTagger.Instance.rightHandTransform.position + GorillaTagger.Instance.rightHandTransform.rotation * GTPlayer.Instance.rightHandOffset, rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
+        }
+
+        public static void WorldScale(GameObject obj, Vector3 targetWorldScale)
+        {
+            Vector3 parentScale = obj.transform.parent.lossyScale;
+            obj.transform.localScale = new Vector3(
+                targetWorldScale.x / parentScale.x,
+                targetWorldScale.y / parentScale.y,
+                targetWorldScale.z / parentScale.z
+            );
+        }
+
+        public static void FixStickyColliders(GameObject platform)
+        {
+            Vector3[] localPositions = new Vector3[]
+            {
+                new Vector3(0, 1f, 0),
+                new Vector3(0, -1f, 0),
+                new Vector3(1f, 0, 0),
+                new Vector3(-1f, 0, 0),
+                new Vector3(0, 0, 1f),
+                new Vector3(0, 0, -1f)
+            };
+            Quaternion[] localRotations = new Quaternion[]
+            {
+                Quaternion.Euler(90, 0, 0),
+                Quaternion.Euler(-90, 0, 0),
+                Quaternion.Euler(0, -90, 0),
+                Quaternion.Euler(0, 90, 0),
+                Quaternion.identity,
+                Quaternion.Euler(0, 180, 0)
+            };
+            for (int i = 0; i < localPositions.Length; i++)
+            {
+                GameObject side = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                try
+                {
+                    if (platform.GetComponent<GorillaSurfaceOverride>() != null)
+                    {
+                        side.AddComponent<GorillaSurfaceOverride>().overrideIndex = platform.GetComponent<GorillaSurfaceOverride>().overrideIndex;
+                    }
+                }
+                catch { }
+                float size = 0.025f;
+                side.transform.SetParent(platform.transform);
+                side.transform.position = localPositions[i] * (size / 2);
+                side.transform.rotation = localRotations[i];
+                WorldScale(side, new Vector3(size, size, 0.01f));
+                side.GetComponent<Renderer>().enabled = false;
+            }
+        }
+
         // Variables
-            // Important
-                // Objects
-                    public static GameObject menu;
+        // Important
+        // Objects
+        public static GameObject menu;
                     public static GameObject menuBackground;   
                     public static GameObject reference;
                     public static GameObject canvasObject;
@@ -574,6 +620,15 @@ namespace StupidTemplate.Menu
 
         // Data
             public static int pageNumber = 0;
-            public static int buttonsType = 0;
+            public static int _currentCategory;
+            public static int currentCategory
+            {
+                get => _currentCategory;
+                set
+                {
+                    _currentCategory = value;
+                    pageNumber = 0;
+                }
+            }
     }
 }

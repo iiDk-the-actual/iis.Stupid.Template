@@ -9,7 +9,7 @@ using static StupidTemplate.Menu.Main;
 namespace StupidTemplate.Patches
 {
     [HarmonyPatch(typeof(MonoBehaviourPunCallbacks), "OnPlayerEnteredRoom")]
-    internal class JoinPatch : MonoBehaviour
+    public class JoinPatch : MonoBehaviour
     {
         private static void Prefix(Player newPlayer)
         {

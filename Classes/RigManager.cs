@@ -6,30 +6,22 @@ using UnityEngine;
 
 namespace StupidTemplate.Classes
 {
-    internal class RigManager : BaseUnityPlugin
+    public class RigManager
     {
-        public static VRRig GetVRRigFromPlayer(Player p)
-        {
-            return GorillaGameManager.instance.FindPlayerVRRig(p);
-        }
+        public static VRRig GetVRRigFromPlayer(Player p) =>
+            GorillaGameManager.instance.FindPlayerVRRig(p);
 
         public static VRRig GetRandomVRRig(bool includeSelf)
         {
-            VRRig random = GorillaParent.instance.vrrigs[UnityEngine.Random.Range(0, GorillaParent.instance.vrrigs.Count - 1)];
+            VRRig random = GorillaParent.instance.vrrigs[Random.Range(0, GorillaParent.instance.vrrigs.Count - 1)];
             if (includeSelf)
-            {
                 return random;
-            }
             else
             {
-                if (random != GorillaTagger.Instance.offlineVRRig)
-                {
+                if (random != VRRig.LocalRig)
                     return random;
-                }
                 else
-                {
                     return GetRandomVRRig(includeSelf);
-                }
             }
         }
 
@@ -48,31 +40,24 @@ namespace StupidTemplate.Classes
             return outRig;
         }
 
-        public static PhotonView GetPhotonViewFromVRRig(VRRig p)
-        {
-            return (PhotonView)Traverse.Create(p).Field("photonView").GetValue();
-        }
+        public static PhotonView GetPhotonViewFromVRRig(VRRig p) =>
+            (PhotonView)Traverse.Create(p).Field("photonView").GetValue();
 
-        public static Photon.Realtime.Player GetRandomPlayer(bool includeSelf)
+        public static Player GetRandomPlayer(bool includeSelf)
         {
             if (includeSelf)
-            {
-                return PhotonNetwork.PlayerList[UnityEngine.Random.Range(0, PhotonNetwork.PlayerList.Length - 1)];
-            } else
-            {
-                return PhotonNetwork.PlayerListOthers[UnityEngine.Random.Range(0, PhotonNetwork.PlayerListOthers.Length - 1)];
-            }
+                return PhotonNetwork.PlayerList[Random.Range(0, PhotonNetwork.PlayerList.Length - 1)];
+            else
+                return PhotonNetwork.PlayerListOthers[Random.Range(0, PhotonNetwork.PlayerListOthers.Length - 1)];
         }
 
-        public static Photon.Realtime.Player GetPlayerFromVRRig(VRRig p)
-        {
-            return GetPhotonViewFromVRRig(p).Owner;
-        }
+        public static Player GetPlayerFromVRRig(VRRig p) =>
+            GetPhotonViewFromVRRig(p).Owner;
 
-        public static Photon.Realtime.Player GetPlayerFromID(string id)
+        public static Player GetPlayerFromID(string id)
         {
-            Photon.Realtime.Player found = null;
-            foreach (Photon.Realtime.Player target in PhotonNetwork.PlayerList)
+            Player found = null;
+            foreach (Player target in PhotonNetwork.PlayerList)
             {
                 if (target.UserId == id)
                 {
@@ -81,6 +66,28 @@ namespace StupidTemplate.Classes
                 }
             }
             return found;
+        }
+
+        public static Color GetPlayerColor(VRRig Player)
+        {
+            if (Player.bodyRenderer.cosmeticBodyType == GorillaBodyType.Skeleton)
+                return Color.green;
+
+            switch (Player.setMatIndex)
+            {
+                case 1:
+                    return Color.red;
+                case 2:
+                case 11:
+                    return new Color32(255, 128, 0, 255);
+                case 3:
+                case 7:
+                    return Color.blue;
+                case 12:
+                    return Color.green;
+                default:
+                    return Player.playerColor;
+            }
         }
     }
 }

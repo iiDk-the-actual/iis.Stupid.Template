@@ -14,7 +14,7 @@ namespace StupidTemplate.Patches
             {
                 if (instance == null)
                 {
-                    instance = new Harmony(StupidTemplate.PluginInfo.GUID);
+                    instance = new Harmony(PluginInfo.GUID);
                 }
                 instance.PatchAll(Assembly.GetExecutingAssembly());
                 IsPatched = true;

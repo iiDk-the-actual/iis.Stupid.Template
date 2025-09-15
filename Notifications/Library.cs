@@ -12,7 +12,7 @@ namespace StupidTemplate.Notifications
     {
         private void Awake()
         {
-            base.Logger.LogInfo("Plugin NotificationLibrary is loaded!");
+            Logger.LogInfo("Plugin NotificationLibrary is loaded!");
         }
 
         private void Init()
@@ -52,7 +52,7 @@ namespace StupidTemplate.Notifications
             this.Testtext.rectTransform.localScale = new Vector3(0.00333333333f, 0.00333333333f, 0.33333333f);
             this.Testtext.rectTransform.localPosition = new Vector3(-1f, -1f, -0.5f);
             this.Testtext.material = this.AlertText;
-            NotifiLib.NotifiText = this.Testtext;
+            NotifiText = this.Testtext;
         }
 
         private void FixedUpdate()
@@ -73,7 +73,7 @@ namespace StupidTemplate.Notifications
                     this.Notifilines = null;
                     this.newtext = "";
                     this.NotificationDecayTimeCounter = 0;
-                    this.Notifilines = Enumerable.ToArray<string>(Enumerable.Skip<string>(this.Testtext.text.Split(Environment.NewLine.ToCharArray()), 1));
+                    this.Notifilines = Enumerable.ToArray(Enumerable.Skip(this.Testtext.text.Split(Environment.NewLine.ToCharArray()), 1));
                     foreach (string text in this.Notifilines)
                     {
                         if (text != "")
@@ -96,20 +96,20 @@ namespace StupidTemplate.Notifications
             {
                 try
                 {
-                    if (NotifiLib.IsEnabled && NotifiLib.PreviousNotifi != NotificationText)
+                    if (IsEnabled && PreviousNotifi != NotificationText)
                     {
                         if (!NotificationText.Contains(Environment.NewLine))
                         {
                             NotificationText += Environment.NewLine;
                         }
-                        NotifiLib.NotifiText.text = NotifiLib.NotifiText.text + NotificationText;
-                        NotifiLib.NotifiText.supportRichText = true;
-                        NotifiLib.PreviousNotifi = NotificationText;
+                        NotifiText.text = NotifiText.text + NotificationText;
+                        NotifiText.supportRichText = true;
+                        PreviousNotifi = NotificationText;
                     }
                 }
                 catch
                 {
-                    UnityEngine.Debug.LogError("Notification failed, object probably nil due to third person ; " + NotificationText);
+                    Debug.LogError("Notification failed, object probably nil due to third person ; " + NotificationText);
                 }
             }
         }
@@ -117,20 +117,20 @@ namespace StupidTemplate.Notifications
         public static void ClearAllNotifications()
         {
             //NotifiLib.NotifiText.text = "<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> <color=white>Notifications cleared.</color>" + Environment.NewLine;
-            NotifiLib.NotifiText.text = "";
+            NotifiText.text = "";
         }
 
         public static void ClearPastNotifications(int amount)
         {
             string text = "";
-            foreach (string text2 in Enumerable.ToArray<string>(Enumerable.Skip<string>(NotifiLib.NotifiText.text.Split(Environment.NewLine.ToCharArray()), amount)))
+            foreach (string text2 in Enumerable.ToArray(Enumerable.Skip(NotifiText.text.Split(Environment.NewLine.ToCharArray()), amount)))
             {
                 if (text2 != "")
                 {
                     text = text + text2 + "\n";
                 }
             }
-            NotifiLib.NotifiText.text = text;
+            NotifiText.text = text;
         }
 
         private GameObject HUDObj;

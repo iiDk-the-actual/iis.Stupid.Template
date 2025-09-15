@@ -3,8 +3,8 @@ using System.ComponentModel;
 
 namespace StupidTemplate.Patches
 {
-    [Description(StupidTemplate.PluginInfo.Description)]
-    [BepInPlugin(StupidTemplate.PluginInfo.GUID, StupidTemplate.PluginInfo.Name, StupidTemplate.PluginInfo.Version)]
+    [Description(PluginInfo.Description)]
+    [BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
     public class HarmonyPatches : BaseUnityPlugin
     {
         private void OnEnable()

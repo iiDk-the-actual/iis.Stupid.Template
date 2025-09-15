@@ -1,39 +1,41 @@
-﻿using UnityEngine;
+﻿using StupidTemplate.Menu;
+using UnityEngine;
 
 namespace StupidTemplate.Classes
 {
-    public class ColorChanger : TimedBehaviour
+    public class ColorChanger : MonoBehaviour
     {
-        public override void Start()
+        public void Start()
         {
-            base.Start();
-            renderer = base.GetComponent<Renderer>();
+            if (colors == null)
+            {
+                Destroy(this);
+                return;
+            }
+
+            targetRenderer = GetComponent<Renderer>();
+
+            if (colors.IsFlat())
+            {
+                Update();
+                Destroy(this);
+                return;
+            }
+
             Update();
         }
 
-        public override void Update()
+        public void Update()
         {
-            base.Update();
-            if (colorInfo != null)
-            {
-                if (!colorInfo.copyRigColors)
-                {
-                    Color color = new Gradient { colorKeys = colorInfo.colors }.Evaluate((Time.time / 2f) % 1);
-                    if (colorInfo.isRainbow)
-                    {
-                        float h = (Time.frameCount / 180f) % 1f;
-                        color = UnityEngine.Color.HSVToRGB(h, 1f, 1f);
-                    }
-                    renderer.material.color = color;
-                }
-                else
-                {
-                    renderer.material = GorillaTagger.Instance.offlineVRRig.mainSkin.material;
-                }
-            }
+            targetRenderer.enabled = !colors.transparent;
+
+            if (colors.transparent)
+                return;
+
+            targetRenderer.material.color = colors.GetCurrentColor();
         }
 
-        public Renderer renderer;
-        public ExtGradient colorInfo;
+        public Renderer targetRenderer;
+        public ExtGradient colors;
     }
 }

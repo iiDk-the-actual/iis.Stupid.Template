@@ -6,7 +6,7 @@ using UnityEngine;
 namespace StupidTemplate.Patches
 {
     [HarmonyPatch(typeof(GorillaNot), "SendReport")]
-    internal class AntiCheat : MonoBehaviour
+    public class AntiCheat : MonoBehaviour
     {
         private static bool Prefix(string susReason, string susId, string susNick)
         {
@@ -61,7 +61,7 @@ namespace StupidTemplate.Patches
     }
 
     [HarmonyPatch(typeof(GorillaNot), "GetRPCCallTracker")]
-    internal class NoGetRPCCallTracker : MonoBehaviour
+    public class NoGetRPCCallTracker : MonoBehaviour
     {
         private static bool Prefix()
         {
