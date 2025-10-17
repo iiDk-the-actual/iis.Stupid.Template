@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using GorillaLocomotion;
 using HarmonyLib;
 using StupidTemplate.Classes;
@@ -189,7 +189,7 @@ namespace StupidTemplate.Menu
                     if (disconnectButton)
                     {
                         GameObject disconnectbutton = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        if (!UnityInput.Current.GetKey(KeyCode.Q))
+                        if (!UnityInput.Current.GetKey(keyboardButton))
                             disconnectbutton.layer = 2;
                         Destroy(disconnectbutton.GetComponent<Rigidbody>());
                         disconnectbutton.GetComponent<BoxCollider>().isTrigger = true;
@@ -227,7 +227,7 @@ namespace StupidTemplate.Menu
 
                 // Page Buttons
                     GameObject gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    if (!UnityInput.Current.GetKey(KeyCode.Q))
+                    if (!UnityInput.Current.GetKey(keyboardButton))
                         gameObject.layer = 2;
                     Destroy(gameObject.GetComponent<Rigidbody>());
                     gameObject.GetComponent<BoxCollider>().isTrigger = true;
@@ -262,7 +262,7 @@ namespace StupidTemplate.Menu
                     component.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
 
                     gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    if (!UnityInput.Current.GetKey(KeyCode.Q))
+                    if (!UnityInput.Current.GetKey(keyboardButton))
                     {
                         gameObject.layer = 2;
                     }
@@ -307,7 +307,7 @@ namespace StupidTemplate.Menu
         public static void CreateButton(float offset, ButtonInfo method)
         {
             GameObject gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            if (!UnityInput.Current.GetKey(KeyCode.Q))
+            if (!UnityInput.Current.GetKey(keyboardButton))
                 gameObject.layer = 2;
             
             Destroy(gameObject.GetComponent<Rigidbody>());
