@@ -1,6 +1,7 @@
 ﻿using GorillaLocomotion;
 using StupidTemplate.Classes;
 using UnityEngine;
+using UnityEngine.XR;
 using static StupidTemplate.Menu.Main;
 
 namespace StupidTemplate.Mods
@@ -51,8 +52,8 @@ namespace StupidTemplate.Mods
                 {
                     platr = GameObject.CreatePrimitive(PrimitiveType.Cube);
                     platr.transform.localScale = new Vector3(0.025f, 0.3f, 0.4f);
-                    platr.transform.position = TrueLeftHand().position;
-                    platr.transform.rotation = TrueLeftHand().rotation;
+                    platr.transform.position = TrueRightHand().position;
+                    platr.transform.rotation = TrueRightHand().rotation;
 
                     FixStickyColliders(platr);
 
@@ -67,6 +68,24 @@ namespace StupidTemplate.Mods
                         platr = null;
                     }
                 }
+            }
+        }
+
+        public static bool previousTeleportTrigger;
+        public static void TeleportGun()
+        {
+            if (ControllerInputPoller.instance.rightGrab)
+            {
+                var GunData = RenderGun();
+                GameObject NewPointer = GunData.NewPointer;
+
+                if (ControllerInputPoller.TriggerFloat(XRNode.RightHand) > 0.5f && !previousTeleportTrigger)
+                {
+                    GTPlayer.Instance.TeleportTo(NewPointer.transform.position + Vector3.up, GTPlayer.Instance.transform.rotation);
+                    GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+                }
+
+                previousTeleportTrigger = ControllerInputPoller.TriggerFloat(XRNode.RightHand) > 0.5f;
             }
         }
     }

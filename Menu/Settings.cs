@@ -1,6 +1,5 @@
 ﻿using StupidTemplate.Classes;
 using UnityEngine;
-using static StupidTemplate.Menu.Main;
 
 namespace StupidTemplate
 {

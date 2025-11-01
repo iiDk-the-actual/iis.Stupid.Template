@@ -1,7 +1,7 @@
 ﻿using StupidTemplate.Classes;
 using StupidTemplate.Mods;
-using static StupidTemplate.Settings;
 using static StupidTemplate.Menu.Main;
+using static StupidTemplate.Settings;
 
 namespace StupidTemplate.Menu
 {
@@ -16,8 +16,7 @@ namespace StupidTemplate.Menu
          *   new ButtonInfo { buttonText = "Return to Main", method =() => currentCategory = 0, isTogglable = false, toolTip = "Returns to the main page of the menu."},
          * 
          * Togglable Mod:
-         *   
-         * 
+         *   new ButtonInfo { buttonText = "Platforms", method =() => Movement.Platforms(), toolTip = "Spawns platforms on your hands when pressing grip."},
          */
 
         public static ButtonInfo[][] buttons = new ButtonInfo[][]
@@ -27,6 +26,7 @@ namespace StupidTemplate.Menu
 
                 new ButtonInfo { buttonText = "Room Mods", method =() => currentCategory = 4, isTogglable = false, toolTip = "Opens the room mods tab."},
                 new ButtonInfo { buttonText = "Movement Mods", method =() => currentCategory = 5, isTogglable = false, toolTip = "Opens the movement mods tab."},
+                new ButtonInfo { buttonText = "Safety Mods", method =() => currentCategory = 6, isTogglable = false, toolTip = "Opens the safety mods tab."},
             },
 
             new ButtonInfo[] { // Settings [1]
@@ -60,6 +60,13 @@ namespace StupidTemplate.Menu
 
                 new ButtonInfo { buttonText = "Platforms", method =() => Movement.Platforms(), toolTip = "Spawns platforms on your hands when pressing grip."},
                 new ButtonInfo { buttonText = "Fly", method =() => Movement.Fly(), toolTip = "Sends you forward when holding A."},
+                new ButtonInfo { buttonText = "Teleport Gun", method =() => Movement.TeleportGun(), toolTip = "Teleports you to wherever your pointer is when pressing trigger."},
+            },
+
+            new ButtonInfo[] { // Safety Mods [6]
+                new ButtonInfo { buttonText = "Return to Main", method =() => currentCategory = 0, isTogglable = false, toolTip = "Returns to the main page of the menu."},
+
+                new ButtonInfo { buttonText = "Anti Report", method =() => Safety.AntiReportDisconnect(), toolTip = "Disconnects you when someone tries to report you."},
             },
         };
     }

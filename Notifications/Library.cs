@@ -1,6 +1,6 @@
-﻿using System;
+﻿using BepInEx;
+using System;
 using System.Linq;
-using BepInEx;
 using UnityEngine;
 using UnityEngine.UI;
 using static StupidTemplate.Settings;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using static StupidTemplate.Menu.Main;
+﻿using static StupidTemplate.Menu.Main;
 
 namespace StupidTemplate.Mods.Settings
 {

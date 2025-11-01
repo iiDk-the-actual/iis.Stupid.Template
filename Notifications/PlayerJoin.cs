@@ -1,10 +1,8 @@
 ﻿using HarmonyLib;
-using StupidTemplate.Notifications;
 using Photon.Pun;
 using Photon.Realtime;
-using System.IO;
+using StupidTemplate.Notifications;
 using UnityEngine;
-using static StupidTemplate.Menu.Main;
 
 namespace StupidTemplate.Patches
 {

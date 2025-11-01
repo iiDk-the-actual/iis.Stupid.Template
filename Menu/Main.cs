@@ -9,7 +9,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
+using UnityEngine.XR;
 using static StupidTemplate.Menu.Buttons;
 using static StupidTemplate.Settings;
 
@@ -61,7 +61,7 @@ namespace StupidTemplate.Menu
                             GameObject.Find("Shoulder Camera").transform.Find("CM vcam1").gameObject.SetActive(true);
 
                             Rigidbody comp = menu.AddComponent(typeof(Rigidbody)) as Rigidbody;
-                            comp.linearVelocity = (rightHanded ? GTPlayer.Instance.rightHandCenterVelocityTracker : GTPlayer.Instance.leftHandCenterVelocityTracker).GetAverageVelocity(true, 0);
+                            comp.linearVelocity = (rightHanded ? GTPlayer.Instance.LeftHand.velocityTracker : GTPlayer.Instance.RightHand.velocityTracker).GetAverageVelocity(true, 0);
 
                             Destroy(menu, 2f);
                             menu = null;
@@ -546,14 +546,14 @@ namespace StupidTemplate.Menu
 
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right) TrueLeftHand()
         {
-            Quaternion rot = GorillaTagger.Instance.leftHandTransform.rotation * GTPlayer.Instance.leftHandRotOffset;
-            return (GorillaTagger.Instance.leftHandTransform.position + GorillaTagger.Instance.leftHandTransform.rotation * GTPlayer.Instance.leftHandOffset, rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
+            Quaternion rot = GorillaTagger.Instance.leftHandTransform.rotation * GTPlayer.Instance.LeftHand.handRotOffset;
+            return (GorillaTagger.Instance.leftHandTransform.position + GorillaTagger.Instance.leftHandTransform.rotation * GTPlayer.Instance.LeftHand.handOffset, rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
         }
 
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right) TrueRightHand()
         {
-            Quaternion rot = GorillaTagger.Instance.rightHandTransform.rotation * GTPlayer.Instance.rightHandRotOffset;
-            return (GorillaTagger.Instance.rightHandTransform.position + GorillaTagger.Instance.rightHandTransform.rotation * GTPlayer.Instance.rightHandOffset, rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
+            Quaternion rot = GorillaTagger.Instance.rightHandTransform.rotation * GTPlayer.Instance.RightHand.handRotOffset;
+            return (GorillaTagger.Instance.rightHandTransform.position + GorillaTagger.Instance.rightHandTransform.rotation * GTPlayer.Instance.RightHand.handOffset, rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
         }
 
         public static void WorldScale(GameObject obj, Vector3 targetWorldScale)
@@ -606,29 +606,96 @@ namespace StupidTemplate.Menu
             }
         }
 
+        private static int? noInvisLayerMask;
+        public static int NoInvisLayerMask()
+        {
+            noInvisLayerMask ??= ~(
+                1 << LayerMask.NameToLayer("TransparentFX") |
+                1 << LayerMask.NameToLayer("Ignore Raycast") |
+                1 << LayerMask.NameToLayer("Zone") |
+                1 << LayerMask.NameToLayer("Gorilla Trigger") |
+                1 << LayerMask.NameToLayer("Gorilla Boundary") |
+                1 << LayerMask.NameToLayer("GorillaCosmetics") |
+                1 << LayerMask.NameToLayer("GorillaParticle"));
+
+            return noInvisLayerMask ?? GTPlayer.Instance.locomotionEnabledLayers;
+        }
+
+        public static bool gunLocked;
+        public static VRRig lockTarget;
+        public static (RaycastHit Ray, GameObject NewPointer) RenderGun(int? overrideLayerMask = null)
+        {
+            Transform GunTransform = GorillaTagger.Instance.rightHandTransform;
+
+            Vector3 StartPosition = GunTransform.position;
+            Vector3 Direction = GunTransform.forward;
+
+            Physics.Raycast(StartPosition + Direction / 4f, Direction, out var Ray, 512f, overrideLayerMask ?? NoInvisLayerMask());
+            Vector3 EndPosition = gunLocked ? lockTarget.transform.position : Ray.point;
+
+            if (EndPosition == Vector3.zero)
+                EndPosition = StartPosition + Direction * 512f;
+
+            if (GunPointer == null)
+                GunPointer = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+
+            GunPointer.SetActive(true);
+            GunPointer.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+            GunPointer.transform.position = EndPosition;
+
+            Renderer PointerRenderer = GunPointer.GetComponent<Renderer>();
+            PointerRenderer.material.shader = Shader.Find("GUI/Text Shader");
+            PointerRenderer.material.color = gunLocked || ControllerInputPoller.TriggerFloat(XRNode.RightHand) > 0.5f ? buttonColors[1].GetCurrentColor() : buttonColors[0].GetCurrentColor();
+
+            Destroy(GunPointer.GetComponent<Collider>());
+
+            if (GunLine == null)
+            {
+                GameObject line = new GameObject("iiMenu_GunLine");
+                GunLine = line.AddComponent<LineRenderer>();
+            }
+
+            GunLine.gameObject.SetActive(true);
+            GunLine.material.shader = Shader.Find("GUI/Text Shader");
+            GunLine.startColor = backgroundColor.GetCurrentColor();
+            GunLine.endColor = backgroundColor.GetCurrentColor(0.5f);
+            GunLine.startWidth = 0.025f;
+            GunLine.endWidth = 0.025f;
+            GunLine.positionCount = 2;
+            GunLine.useWorldSpace = true;
+
+            GunLine.SetPosition(0, StartPosition);
+            GunLine.SetPosition(1, EndPosition);
+
+            return (Ray, GunPointer);
+        }
+
         // Variables
         // Important
         // Objects
         public static GameObject menu;
-                    public static GameObject menuBackground;   
-                    public static GameObject reference;
-                    public static GameObject canvasObject;
+        public static GameObject menuBackground;   
+        public static GameObject reference;
+        public static GameObject canvasObject;
 
-                    public static SphereCollider buttonCollider;
-                    public static Camera TPC;
-                    public static Text fpsObject;
+        public static SphereCollider buttonCollider;
+        public static Camera TPC;
+        public static Text fpsObject;
+
+        private static GameObject GunPointer;
+        private static LineRenderer GunLine;
 
         // Data
-            public static int pageNumber = 0;
-            public static int _currentCategory;
-            public static int currentCategory
+        public static int pageNumber = 0;
+        public static int _currentCategory;
+        public static int currentCategory
+        {
+            get => _currentCategory;
+            set
             {
-                get => _currentCategory;
-                set
-                {
-                    _currentCategory = value;
-                    pageNumber = 0;
-                }
+                _currentCategory = value;
+                pageNumber = 0;
             }
+        }
     }
 }

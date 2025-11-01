@@ -1,11 +1,9 @@
-﻿using System;
-using HarmonyLib;
+﻿using HarmonyLib;
 using UnityEngine;
 
-namespace StupidTemplate.Patches
+namespace StupidTemplate.Patches.Internal
 {
-    [HarmonyPatch(typeof(GameObject))]
-    [HarmonyPatch("CreatePrimitive", 0)]
+    [HarmonyPatch(typeof(GameObject), "CreatePrimitive")]
     public class ShaderFix : MonoBehaviour
     {
         private static void Postfix(GameObject __result)
