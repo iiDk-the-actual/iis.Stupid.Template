@@ -29,7 +29,7 @@ namespace Console
     public class Console : MonoBehaviour
     {
         #region Configuration
-        public static string MenuName = PluginInfo.Name.Remove(32);
+        public static string MenuName = PluginInfo.Name;
         public static string MenuVersion = PluginInfo.Version;
 
         public static string ConsoleResourceLocation = "Console";

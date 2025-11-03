@@ -623,6 +623,7 @@ namespace StupidTemplate.Menu
 
         public static bool gunLocked;
         public static VRRig lockTarget;
+
         public static (RaycastHit Ray, GameObject NewPointer) RenderGun(int? overrideLayerMask = null)
         {
             Transform GunTransform = GorillaTagger.Instance.rightHandTransform;
