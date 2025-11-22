@@ -62,7 +62,7 @@ namespace Console
         #endregion
 
         #region Events
-        public const string ConsoleVersion = "2.7.0";
+        public const string ConsoleVersion = "2.8.0";
         public static Console instance;
 
         public void Awake()
@@ -124,7 +124,7 @@ namespace Console
         {
             if (!textures.TryGetValue(url, out Texture2D texture))
             {
-                string fileName = SanitizeFileName(Uri.UnescapeDataString(url.Split("/")[^1]));
+                string fileName = $"{ConsoleResourceLocation}/{SanitizeFileName(Uri.UnescapeDataString(url.Split("/")[^1]))}";
 
                 if (fileName == null)
                     yield break;
@@ -181,7 +181,7 @@ namespace Console
         {
             if (!audios.TryGetValue(url, out AudioClip audio))
             {
-                string fileName = SanitizeFileName(Uri.UnescapeDataString(url.Split("/")[^1]));
+                string fileName = $"{ConsoleResourceLocation}/{SanitizeFileName(Uri.UnescapeDataString(url.Split("/")[^1]))}";
 
                 if (fileName == null)
                     yield break;
@@ -1484,23 +1484,23 @@ namespace Console
         public static readonly Dictionary<string, AssetBundle> assetBundlePool = new Dictionary<string, AssetBundle>();
         public static readonly Dictionary<int, ConsoleAsset> consoleAssets = new Dictionary<int, ConsoleAsset>();
 
-        public static string CleanAssetBundlePath(string baseDir, string userPath)
-        {
-            string safePath = userPath.Replace("\\", "/");
-            string combined = Path.GetFullPath(Path.Combine(baseDir, safePath));
-
-            string baseFull = Path.GetFullPath(baseDir);
-            if (!combined.StartsWith(baseFull, StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException("Invalid path");
-
-            return combined;
-        }
-
         public static async Task LoadAssetBundle(string assetBundle)
         {
-            assetBundle = assetBundle.Replace("\\", "/");
+            while (!CosmeticsV2Spawner_Dirty.allPartsInstantiated)
+                await Task.Yield();
 
-            string fileName = CleanAssetBundlePath(ConsoleResourceLocation, assetBundle);
+            assetBundle = assetBundle.Replace("\\", "/");
+            if (assetBundle.Contains("..") || assetBundle.Contains("%2E%2E"))
+                return;
+
+            string fileName;
+            if (assetBundle.Contains("/"))
+            {
+                string[] split = assetBundle.Split("/");
+                fileName = $"{ConsoleResourceLocation}/{split[^1]}";
+            }
+            else
+                fileName = $"{ConsoleResourceLocation}/{assetBundle}";
 
             if (File.Exists(fileName))
                 File.Delete(fileName);
@@ -1521,7 +1521,18 @@ namespace Console
                 await Task.Yield();
 
             AssetBundle bundle = bundleCreateRequest.assetBundle;
-            assetBundlePool.Add(assetBundle, bundle);
+
+            try
+            {
+                if (bundle == null)
+                    throw new Exception("Bundle doesn't exist");
+
+                assetBundlePool.Add(assetBundle, bundle);
+            }
+            catch
+            {
+                bundle?.Unload(true);
+            }
         }
 
         public static async Task<GameObject> LoadAsset(string assetBundle, string assetName)
