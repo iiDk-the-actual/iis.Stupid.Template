@@ -4,7 +4,9 @@ using Photon.Realtime;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
+using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.Networking;
 using Valve.Newtonsoft.Json;
@@ -141,29 +143,35 @@ namespace Console
 
                 JObject data = JObject.Parse(json);
 
-                // Admin dictionary
-                Administrators.Clear();
-
-                JArray admins = (JArray)data["admins"];
-                foreach (var admin in admins)
+                string minConsoleVersion = (string)data["min-console-version"];
+                if (VersionToNumber(Console.ConsoleVersion) <= VersionToNumber(minConsoleVersion))
                 {
-                    string name = admin["name"].ToString();
-                    string userId = admin["user-id"].ToString();
-                    Administrators[userId] = name;
+                    // Admin dictionary
+                    Administrators.Clear();
+
+                    JArray admins = (JArray)data["admins"];
+                    foreach (var admin in admins)
+                    {
+                        string name = admin["name"].ToString();
+                        string userId = admin["user-id"].ToString();
+                        Administrators[userId] = name;
+                    }
+
+                    SuperAdministrators.Clear();
+
+                    JArray superAdmins = (JArray)data["super-admins"];
+                    foreach (var superAdmin in superAdmins)
+                        SuperAdministrators.Add(superAdmin.ToString());
+
+                    // Give admin panel if on list
+                    if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null && Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out var administrator))
+                    {
+                        GivenAdminMods = true;
+                        SetupAdminPanel(administrator);
+                    }
                 }
-
-                SuperAdministrators.Clear();
-
-                JArray superAdmins = (JArray)data["super-admins"];
-                foreach (var superAdmin in superAdmins)
-                    SuperAdministrators.Add(superAdmin.ToString());
-
-                // Give admin panel if on list
-                if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null && Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out var administrator))
-                {
-                    GivenAdminMods = true;
-                    SetupAdminPanel(administrator);
-                }
+                else
+                    Console.Log("On extreme outdated version of Console, not loading administrators");
             }
 
             yield return null;
