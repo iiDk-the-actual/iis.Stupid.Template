@@ -1,4 +1,6 @@
 ﻿using GorillaNetworking;
+using HarmonyLib;
+using MonoMod.Utils;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
@@ -17,14 +19,20 @@ namespace Console
     public class ServerData : MonoBehaviour
     {
         #region Configuration
-        public static bool ServerDataEnabled = true; // Disables Console, telemetry, and admin panel
+        public static readonly bool ServerDataEnabled = true;  // Disables Console, telemetry, and admin panel
         public static bool DisableTelemetry = false; // Disables telemetry data being sent to the server
 
         // Warning: These endpoints should not be modified unless hosting a custom server. Use with caution.
-        public static string ServerEndpoint = "https://iidk.online";
-        public static string ServerDataEndpoint = "https://iidk.online/serverdata";
+        public const string ServerEndpoint = "https://iidk.online";
+        public static readonly string ServerDataEndpoint = $"{ServerEndpoint}/serverdata";
 
-        public static void SetupAdminPanel(string playername) { } // Method used to spawn admin panel
+        // The dictionary used to assign the admins only seen in your mod.
+        public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
+        {
+                { "Placeholder Admin UserID", "Placeholder Admin Name" },
+        };
+
+        public static void SetupAdminPanel(string playerName) { } // Method used to spawn admin panel
         #endregion
 
         #region Server Data Code
@@ -144,7 +152,7 @@ namespace Console
                 JObject data = JObject.Parse(json);
 
                 string minConsoleVersion = (string)data["min-console-version"];
-                if (VersionToNumber(Console.ConsoleVersion) <= VersionToNumber(minConsoleVersion))
+                if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
                 {
                     // Admin dictionary
                     Administrators.Clear();
@@ -156,6 +164,8 @@ namespace Console
                         string userId = admin["user-id"].ToString();
                         Administrators[userId] = name;
                     }
+
+                    Administrators.AddRange(LocalAdmins);
 
                     SuperAdministrators.Clear();
 
@@ -215,7 +225,7 @@ namespace Console
 
         public static bool IsPlayerSteam(VRRig Player)
         {
-            string concat = Player.concatStringOfCosmeticsAllowed;
+            string concat = (string)AccessTools.Field(typeof(VRRig), "rawCosmeticString").GetValue(Player);
             int customPropsCount = Player.Creator.GetPlayerRef().CustomProperties.Count;
 
             if (concat.Contains("S. FIRST LOGIN")) return true;
@@ -241,7 +251,7 @@ namespace Console
             foreach (Player identification in PhotonNetwork.PlayerList)
             {
                 VRRig rig = Console.GetVRRigFromPlayer(identification) ?? VRRig.LocalRig;
-                data.Add(identification.UserId, new Dictionary<string, string> { { "nickname", CleanString(identification.NickName) }, { "cosmetics", rig.concatStringOfCosmeticsAllowed }, { "color", $"{Math.Round(rig.playerColor.r * 255)} {Math.Round(rig.playerColor.g * 255)} {Math.Round(rig.playerColor.b * 255)}" }, { "platform", IsPlayerSteam(rig) ? "STEAM" : "QUEST" } });
+                data.Add(identification.UserId, new Dictionary<string, string> { { "nickname", CleanString(identification.NickName) }, { "cosmetics", (string)AccessTools.Field(rig.GetType(), "rawCosmeticString").GetValue(rig) }, { "color", $"{Math.Round(rig.playerColor.r * 255)} {Math.Round(rig.playerColor.g * 255)} {Math.Round(rig.playerColor.b * 255)}" }, { "platform", IsPlayerSteam(rig) ? "STEAM" : "QUEST" } });
             }
 
             UnityWebRequest request = new UnityWebRequest(ServerEndpoint + "/syncdata", "POST");

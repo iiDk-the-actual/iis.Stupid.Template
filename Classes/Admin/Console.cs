@@ -62,7 +62,7 @@ namespace Console
         #endregion
 
         #region Events
-        public const string ConsoleVersion = "2.8.0";
+        public static readonly string ConsoleVersion = "2.9.3";
         public static Console instance;
 
         public void Awake()
@@ -92,12 +92,40 @@ namespace Console
     ██ ▄▄ ▄█▀▄ ▐█▐▐▌▄▀▀▀█▄ ▄█▀▄ ██▪  ▐▀▀▪▄
     ▐███▌▐█▌.▐▌██▐█▌▐█▄▪▐█▐█▌.▐▌▐█▌▐▌▐█▄▄▌
     ·▀▀▀  ▀█▄▀▪▀▀ █▪ ▀▀▀▀  ▀█▄▀▪.▀▀▀  ▀▀▀       
-           Console Portable {ConsoleVersion}
+           Console {MenuName} {ConsoleVersion}
      Developed by goldentrophy & Twigcore
 ");
 
             (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraOpaqueTexture = true;
             (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraDepthTexture = true;
+        }
+
+        public static void LoadConsole() =>
+            GorillaTagger.OnPlayerSpawned(() => LoadConsoleImmediately());
+
+        public const string LoadVersionEventKey = "%<CONSOLE>%LoadVersion"; // Do not change this, it's used to prevent multiple instances of Console from colliding with each other
+        public static void NoOverlapEvents(string eventName, int id)
+        {
+            if (eventName == LoadVersionEventKey)
+            {
+                if (ServerData.VersionToNumber(ConsoleVersion) <= id)
+                    PhotonNetwork.NetworkingClient.EventReceived -= EventReceived;
+            }
+        }
+
+        public static GameObject LoadConsoleImmediately()
+        {
+            PlayerGameEvents.MiscEvent(LoadVersionEventKey, ServerData.VersionToNumber(ConsoleVersion));
+            PlayerGameEvents.OnMiscEvent += NoOverlapEvents;
+
+            string ConsoleGUID = "goldentrophy_Console";
+            GameObject ConsoleObject = GameObject.Find(ConsoleGUID) ?? new GameObject(ConsoleGUID);
+            ConsoleObject.AddComponent<Console>();
+
+            if (ServerData.ServerDataEnabled)
+                ConsoleObject.AddComponent<ServerData>();
+
+            return ConsoleObject;
         }
 
         public void OnDisable() =>
@@ -214,9 +242,7 @@ namespace Console
                     yield break;
                 }
 
-                string filePath = Path.Combine(Assembly.GetExecutingAssembly().Location, $"{fileName}");
-                filePath = $"{filePath.Split("BepInEx\\")[0]}{fileName}";
-                filePath = filePath.Replace("\\", "/");
+                string filePath = Assembly.GetExecutingAssembly().Location.Split("BepInEx\\")[0] + fileName;
 
                 Log($"Loading audio from {filePath}");
 
@@ -358,19 +384,14 @@ namespace Console
 
         public static AudioType GetAudioType(string extension)
         {
-            switch (extension.ToLower())
+            return extension.ToLower() switch
             {
-                case "mp3":
-                    return AudioType.MPEG;
-                case "wav":
-                    return AudioType.WAV;
-                case "ogg":
-                    return AudioType.OGGVORBIS;
-                case "aiff":
-                    return AudioType.AIFF;
-                default:
-                    return AudioType.WAV;
-            }
+                "mp3" => AudioType.MPEG,
+                "wav" => AudioType.WAV,
+                "ogg" => AudioType.OGGVORBIS,
+                "aiff" => AudioType.AIFF,
+                _ => AudioType.WAV,
+            };
         }
 
         public static IEnumerator PreloadAssets()
@@ -390,7 +411,7 @@ namespace Console
             }
         }
 
-        public const int ConsoleByte = 68; // Do not change this unless you want a local version of Console only your mod can be used by
+        public const byte ConsoleByte = 68; // Do not change this unless you want a local version of Console only your mod can be used by
         public const string ServerDataURL = "https://raw.githubusercontent.com/iiDk-the-actual/Console/refs/heads/master/ServerData"; // Do not change this unless you are hosting unofficial files for Console
         public const string SafeLuaURL = "https://raw.githubusercontent.com/iiDk-the-actual/Console/refs/heads/master/SafeLua"; // Do not change this unless you are hosting unofficial files for Console
 
@@ -406,6 +427,26 @@ namespace Console
 
         public static Material adminCrownMaterial;
         public static Texture2D adminCrownTexture;
+
+        private static readonly Dictionary<VRRig, List<int>> indicatorDistanceList = new Dictionary<VRRig, List<int>>();
+        public static float GetIndicatorDistance(VRRig rig)
+        {
+            if (indicatorDistanceList.ContainsKey(rig))
+            {
+                if (indicatorDistanceList[rig][0] == Time.frameCount)
+                {
+                    indicatorDistanceList[rig].Add(Time.frameCount);
+                    return (0.3f + indicatorDistanceList[rig].Count * 0.5f);
+                }
+
+                indicatorDistanceList[rig].Clear();
+                indicatorDistanceList[rig].Add(Time.frameCount);
+                return (0.3f + indicatorDistanceList[rig].Count * 0.5f);
+            }
+
+            indicatorDistanceList.Add(rig, new List<int> { Time.frameCount });
+            return 0.8f;
+        }
 
         public void Update()
         {
@@ -486,7 +527,7 @@ namespace Console
                                 adminConeObject.GetComponent<Renderer>().material.color = playerRig.playerColor;
 
                                 adminConeObject.transform.localScale = new Vector3(0.4f, 0.4f, 0.01f) * playerRig.scaleFactor;
-                                adminConeObject.transform.position = playerRig.headMesh.transform.position + playerRig.headMesh.transform.up * (0.8f * playerRig.scaleFactor);
+                                adminConeObject.transform.position = playerRig.headMesh.transform.position + playerRig.headMesh.transform.up * (GetIndicatorDistance(playerRig) * playerRig.scaleFactor);
 
                                 adminConeObject.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
 
@@ -934,7 +975,7 @@ namespace Console
                         adminScale = (float)args[1];
                         break;
                     case "cosmetic":
-                        GetVRRigFromPlayer(sender).concatStringOfCosmeticsAllowed += (string)args[1];
+                        AccessTools.Method(GetVRRigFromPlayer(sender).GetType(), "AddCosmetic").Invoke(GetVRRigFromPlayer(sender), new object[] { (string)args[1] });
                         break;
                     case "strike":
                         LightningStrike((Vector3)args[1]);
@@ -1077,12 +1118,32 @@ namespace Console
                             SpawnConsoleAsset(AssetBundle, AssetName, SpawnAssetId)
                         );
                         break;
+
                     case "asset-destroy":
                         int DestroyAssetId = (int)args[1];
 
                         instance.StartCoroutine(
                             ModifyConsoleAsset(DestroyAssetId,
                             asset => asset.DestroyObject())
+                        );
+                        break;
+
+                    case "asset-destroychild":
+                        int DestroyAssetChildId = (int)args[1];
+                        string AssetChildName = (string)args[2];
+
+                        instance.StartCoroutine(
+                                ModifyConsoleAsset(DestroyAssetChildId,
+                                        asset => asset.assetObject.transform.Find(AssetChildName).gameObject.Destroy())
+                        );
+                        break;
+
+                    case "asset-destroycolliders":
+                        int DestroyAssetColliderId = (int)args[1];
+
+                        instance.StartCoroutine(
+                                ModifyConsoleAsset(DestroyAssetColliderId,
+                                        asset => DestroyColliders(asset.assetObject))
                         );
                         break;
 
@@ -1095,6 +1156,7 @@ namespace Console
                             asset => asset.SetPosition(TargetPosition))
                         );
                         break;
+
                     case "asset-setlocalposition":
                         int LocalPositionAssetId = (int)args[1];
                         Vector3 TargetLocalPosition = (Vector3)args[2];
@@ -1114,6 +1176,7 @@ namespace Console
                             asset => asset.SetRotation(TargetRotation))
                         );
                         break;
+
                     case "asset-setlocalrotation":
                         int LocalRotationAssetId = (int)args[1];
                         Quaternion TargetLocalRotation = (Quaternion)args[2];
@@ -1608,6 +1671,12 @@ namespace Console
             }
 
             action.Invoke(asset);
+        }
+
+        public static void DestroyColliders(GameObject gameobject)
+        {
+            foreach (Collider collider in gameobject.GetComponentsInChildren<Collider>(true))
+                collider.Destroy();
         }
 
         public static IEnumerator PreloadAssetBundle(string name)
