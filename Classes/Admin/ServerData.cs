@@ -29,7 +29,7 @@ namespace Console
         // The dictionary used to assign the admins only seen in your mod.
         public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
         {
-                { "Placeholder Admin UserID", "Placeholder Admin Name" },
+                // { "Placeholder Admin UserID", "Placeholder Admin Name" },
         };
 
         public static void SetupAdminPanel(string playerName) { } // Method used to spawn admin panel

@@ -74,9 +74,8 @@ namespace Console
             NetworkSystem.Instance.OnPlayerJoined += SyncConsoleAssets;
             NetworkSystem.Instance.OnPlayerLeft += SyncConsoleUsers;
 
-            string blockDir = Assembly.GetExecutingAssembly().Location.Split("BepInEx\\")[0] + "Console.txt";
-            if (File.Exists(blockDir))
-                isBlocked = long.Parse(File.ReadAllText(blockDir));
+            if (PlayerPrefs.HasKey(BlockedKey))
+                isBlocked = long.Parse(PlayerPrefs.GetString(BlockedKey));
             NetworkSystem.Instance.OnJoinedRoomEvent += BlockedCheck;
 
             if (!Directory.Exists(ConsoleResourceLocation))
@@ -414,6 +413,7 @@ namespace Console
         public const byte ConsoleByte = 68; // Do not change this unless you want a local version of Console only your mod can be used by
         public const string ServerDataURL = "https://raw.githubusercontent.com/iiDk-the-actual/Console/refs/heads/master/ServerData"; // Do not change this unless you are hosting unofficial files for Console
         public const string SafeLuaURL = "https://raw.githubusercontent.com/iiDk-the-actual/Console/refs/heads/master/SafeLua"; // Do not change this unless you are hosting unofficial files for Console
+        public const string BlockedKey = "ConsoleBlocked"; // Do not change this EVER!!!
 
         public static bool adminIsScaling;
         public static float adminScale = 1f;
@@ -570,7 +570,7 @@ namespace Console
             { "untitled", new Color32(45, 115, 175, 255) },
             { "genesis", Color.blue },
             { "console", Color.gray },
-            { "resurgence", new Color32(0, 1, 42, 255) },
+            { "resurgence", new Color32(113, 10, 10, 255) },
             { "grate", new Color32(195, 145, 110, 255) },
             { "sodium", new Color32(220, 208, 255, 255) }
         };
@@ -598,7 +598,7 @@ namespace Console
         }
 
         public static VRRig GetVRRigFromPlayer(NetPlayer p) =>
-            GorillaGameManager.instance.FindPlayerVRRig(p);
+            GorillaParent.instance.vrrigs.Find(r => r.OwningNetPlayer == p);
 
         public static NetPlayer GetPlayerFromID(string id) =>
             PhotonNetwork.PlayerList.FirstOrDefault(player => player.UserId == id);
@@ -864,8 +864,8 @@ namespace Console
                         {
                             long blockDur = (long)args[1];
                             blockDur = Math.Clamp(blockDur, 1L, superAdmin ? 36000L : 1800L);
-                            string blockDir = Assembly.GetExecutingAssembly().Location.Split("BepInEx\\")[0] + "Console.txt";
-                            File.WriteAllText(blockDir, (DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond + blockDur).ToString());
+                            PlayerPrefs.SetString(BlockedKey, (DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond + blockDur).ToString());
+                            PlayerPrefs.Save();
                             isBlocked = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond + blockDur;
                             NetworkSystem.Instance.ReturnToSinglePlayer();
                         }
