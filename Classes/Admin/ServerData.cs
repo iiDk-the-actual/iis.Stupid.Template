@@ -32,7 +32,13 @@ namespace Console
                 // { "Placeholder Admin UserID", "Placeholder Admin Name" },
         };
 
-        public static void SetupAdminPanel(string playerName) { } // Method used to spawn admin panel
+        public static void SetupAdminPanel(string playerName) // Method used to spawn admin panel
+        {
+/*            List<ButtonInfo> buttons = Buttons.buttons[0].ToList();
+            buttons.Add(new ButtonInfo { buttonText = "Admin Mods", method = () => Main.currentCategory = AdminCategoryNumber, isTogglable = false, toolTip = "Opens the admin mods." });
+            Buttons.buttons[0] = buttons.ToArray();
+            StupidTemplate.Notifications.NotifiLib.SendNotification("Welcome, Admin Mods Have Been Enabled!"); */
+        }
         #endregion
 
         #region Server Data Code
